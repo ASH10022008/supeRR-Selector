@@ -1,35 +1,29 @@
 # supeRR-Selector
 
-A Streamlit dashboard for exploring Rajasthan Royals clutch-performance rankings, pressure metrics, and player comparisons.
+Streamlit dashboard ranking Rajasthan Royals players by performance in high-pressure deliveries.
 
-## Run locally
-
-Requires Python 3.10 or newer.
+## Run and deploy
 
 ```bash
-python -m venv .venv
-# macOS/Linux
-source .venv/bin/activate
-# Windows PowerShell: .venv\Scripts\Activate.ps1
-
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 
-The app reads the processed delivery dataset from `data/processed_ball_by_ball.csv`.
+Deploy on [Streamlit Community Cloud](https://share.streamlit.io) using branch `main` and entry file `streamlit_app.py`. Rankings read `data/processed_ball_by_ball.csv`.
 
-## Deploy on Streamlit Community Cloud
+## Method
 
-1. Push this repository and the branch you want to deploy to GitHub.
-2. In [Streamlit Community Cloud](https://share.streamlit.io), choose **New app**.
-3. Select `ASH10022008/supeRR-Selector`, branch `main`, and main file `streamlit_app.py`.
-4. Deploy. Streamlit installs the packages listed in the root `requirements.txt`.
+**High pressure:** death overs (overs 16–20) **or** a collapse (5+ wickets down by over 15).
 
-If the repository is not available in the picker, sign in with the GitHub account that can access it and authorize Streamlit Community Cloud to access the repository.
+**Eligibility:** at least 30 normal deliveries and 20 high-pressure deliveries.
 
-## Project files
+Let `N` be normal deliveries, `P` high-pressure deliveries, `R` runs, and `W` wickets taken on pressure deliveries.
 
-- `streamlit_app.py` — dashboard entry point.
-- `pressure_engine.py` — computes player metrics and rankings.
-- `preprocessing.py` — preprocessing utility for the source CSV files.
-- `data/` — source and processed CSV datasets.
+- Batter strike rate: `SR = 100 × R / deliveries`
+- Bowler economy: `Econ = 6 × R / deliveries`
+- League pressure benchmarks: `league_SR = 100 × total pressure runs / P`; `league_Econ = 6 × total pressure runs / P`
+- Batter impact: `(pressure_SR − league_SR) + 0.2 × (pressure_SR − normal_SR)`
+- Bowler impact: `15 × (league_Econ − pressure_Econ) + 3 × (normal_Econ − pressure_Econ) + 360 × W / P`
+- Final clutch score (both roles): `impact × ln(1 + P) × ln(1 + pressure_matches) × avg_stakes × avg_recency`
+
+**Weights:** stakes multipliers are Final 2.5, Semi 1.9, Qualifier 1.8, Eliminator 1.7, Super4 1.5, League 1.2, and other/unknown 1.0. Recency weight is `e^(−0.35 × years_ago)`, where `years_ago` is measured from the latest dataset date using 365.25 days per year. Stakes and recency are averaged over pressure deliveries.
